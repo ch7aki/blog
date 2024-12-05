@@ -1,0 +1,124 @@
+{{ partial "head.html" . }}
+<body>
+  <div id="blog">
+    {{ partial "header.html" . }}
+    {{ partial "sidebar.html" . }}
+    {{ partial "post/header-cover.html" . }}
+    <div id="main" data-behavior="{{ .Scratch.Get "sidebarBehavior" }}"
+      class="{{ with .Params.coverimage }}hasCover{{ end }}
+              {{ if eq .Params.covermeta "out" }}hasCoverMetaOut{{ else }}hasCoverMetaIn{{ end }}
+              {{ with .Params.coverCaption }}hasCoverCaption{{ end }}">
+      <section class="postShorten-group main-content-wrap">
+        {{ $pinned := where .Site.RegularPages "Params.pinned" true }}
+        {{ $unpinned := where .Site.RegularPages "Params.pinned" false }}
+        {{ $allPages := append $pinned $unpinned }}
+        {{ $paginator := .Paginate $allPages }}
+        <div id="main" class="content-with-right-sidebar">
+          <div class="content">
+            <div id="search-results" class="article-row"></div>
+          </div>
+          {{ partial "sidebar-right.html" . }}
+        </div>
+        {{ partial "pagination.html" . }}
+      </section>
+      {{ partial "footer.html" . }}
+    </div>
+  </div>
+{{ partial "foot.html" . }}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const params = new URLSearchParams(window.location.search);
+  const query = params.get('query');
+
+  // 検索用のインデックスデータ
+  const data = [
+  {{- range $index, $page := .Site.Pages }}
+  {{- if and (not (or (eq $page.Kind "taxonomy") (eq $page.Kind "term"))) (strings.Contains $page.RelPermalink "posts/") }}
+  {
+      url: "{{ $page.RelPermalink }}",
+      title: "{{ $page.Title }}",
+      date: "{{ $page.Date }}",
+      body: "{{ template "escape" (printf "%s %s" $page.Title $page.Plain) }}"
+  },
+  {{- end }}
+  {{- end }}
+  ];
+
+  function searchData(query) {
+    const result = [];
+    if (!query || query.trim().length < 1) {
+      return result;
+    }
+    const re = new RegExp(query.trim(), 'i');
+    for (const item of data) {
+      if (re.test(item.title) || re.test(item.body)) {
+        result.push(item);
+      }
+    }
+    return result;
+  }
+
+  function showResult(results) {
+  const container = document.querySelector('.article-row');
+  container.innerHTML = results.map(item => {
+    // サムネイルのパスを設定 (例: 各記事のurl/thumbnail.png)
+    const thumbnailPath = `${item.url}thumbnail.png`;
+
+    // 記事のHTMLを生成
+    return `
+      <div class="article">
+        <article class="postShorten postShorten--thumbnailimg-top">
+          <div class="postShorten-wrap">
+            <a href="${item.url}" aria-label="投稿を開く: ${item.title}">
+              <div class="postShorten-thumbnailimg">
+                <img alt="${item.title} thumbnail" src="${thumbnailPath}" />
+              </div>
+            </a>
+            <div class="postShorten-header">
+              <h1 class="postShorten-title">
+                <a class="link-unstyled" href="${item.url}" aria-label="投稿を開く: ${item.title}">
+                  ${item.title}
+                </a>
+              </h1>
+              <div class="postShorten-meta post-meta">
+                <time datetime="${new Date(item.date).toISOString()}">
+                  ${new Date(item.date).toISOString().split('T')[0]}
+                </time>
+              </div>
+            </div>
+            <div class="postShorten-excerpt">
+              <p>
+                <a href="${item.url}" class="postShorten-excerpt_link link" aria-label="投稿を開く: ${item.title}">続きを読む</a>
+              </p>
+            </div>
+          </div>
+        </article>
+      </div>
+    `;
+  }).join('');
+}
+
+  if (query) {
+    const results = searchData(query);
+    showResult(results);
+  }
+});
+
+// 検索ボックスでEnterキーが押されたときに検索を実行するイベントリスナーを設定
+// ボックスがあるところには必ず読ませる
+document.querySelector('#search-input').addEventListener('keypress', function(e) {
+  if (e.key === 'Enter') {
+    const query = e.target.value;
+    if (query) {
+      window.location.href = `/result?query=${encodeURIComponent(query)}`;
+    }
+  }
+});
+
+document.addEventListener('DOMContentLoaded', (event) => {
+document.getElementById('search-input').value = '';
+});
+</script>
+</body>
+</html>

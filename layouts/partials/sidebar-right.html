@@ -1,0 +1,51 @@
+<aside id="sidebar-right">
+  <div class="sidebar-image-container">
+    <a href="https://sites.google.com/view/happy-busy/" target="_blank">
+      <img src="{{ "/img/jikannee.png" | relURL }}" alt="画像説明">
+    </a>
+    <a href="https://sites.google.com/view/happy-busy/" target="_blank">
+      <img src="{{ "/img/jikannee.png" | relURL }}" alt="画像説明">
+    </a>
+    <a href="https://sites.google.com/view/happy-busy/" target="_blank">
+      <img src="{{ "/img/jikannee.png" | relURL }}" alt="画像説明">
+    </a>
+  </div>
+  <div id="search-box">  
+    <input type="text" placeholder="検索するキーワードを入力" />
+  </div>
+  <script>
+    document.querySelector('#search-box').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        const query = e.target.value;
+        if (query) {
+          window.location.href = `/result?query=${encodeURIComponent(query)}`;
+        }
+      }
+    });
+  </script>
+
+  <!-- 固定記事 -->
+  <!-- <div id="featured-articles">
+    <div class="featured-article">
+      <img src="images/thumbnail.png" alt="サムネイル1">
+      <a href="posts/005_c++_increment">記事タイトル1</a>
+    </div>
+    <div class="featured-article">
+      <img src="images/thumbnail.png" alt="サムネイル2">
+      <a href="posts/005_c++_increment">記事タイトル2</a>
+    </div> 
+  </div>  -->
+  <ul class="tag-grid">
+    {{ range $name, $taxonomy := .Site.Taxonomies.tags }}
+      <li>
+        <a href="{{ "tags/" | relURL }}{{ $name }}"> > {{ $name }} </a>
+      </li>
+    {{ end }}
+  </ul>  
+</aside>
+
+<!-- トップとサイドバーでフォームの名前を変えているので一旦書きわけ -->
+{{- /* エスケープ処理（改行を空白化、前後の空白削除、連続する空白を集約） */}}
+{{- define "escape" }}
+  {{- trim (replace . "\n" " ") " " | replaceRE " +" " " -}}
+{{- end }}
